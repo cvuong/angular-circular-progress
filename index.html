@@ -6,27 +6,50 @@
     <script src="https://d3js.org/d3.v4.min.js"></script>
     <script>
       (function() {
-        var WIDTH = 200,
-            HEIGHT = WIDTH;
+        var RADIUS = 100;
 
-        var outerThickness = 10;
+        var ACTUAL_PROGRESS_THICKNESS = 5 // px
+        var ACTUAL_PROGRESS_OUTER_RADIUS = RADIUS; // px
+        var ACTUAL_PROGRESS_INNER_RADIUS = RADIUS - ACTUAL_PROGRESS_THICKNESS; // px
+        var PROGRESS_SPACING = 3; // px
+        var CIRCLE_MARGIN = 5; // px
+        var CIRCLE_RADIUS = 0;
 
+        // Available color constants
+        var colors = {
+          GREEN: 'green',
+          ORANGE: 'orange',
+          RED: 'red',
+          GREY: 'grey'
+        }
+
+        // Render the SVG container element
         var svg = d3.select("body")
           .append('svg')
-          .attr('width', WIDTH)
-          .attr('height', HEIGHT)
+          .attr('width', RADIUS * 2)
+          .attr('height', RADIUS * 2)
           .append('g')
-          .attr('transform', 'translate(' + WIDTH / 2 + ', ' + HEIGHT / 2 + ')');
+          .attr('transform', 'translate(' + RADIUS + ', ' + RADIUS + ')');
 
-        var arc = d3.arc()
-          .outerRadius(WIDTH / 2)
-          .innerRadius((WIDTH / 2) - outerThickness)
+        // Render the actual progress ring
+        var actualProgressRing = d3.arc()
+          .outerRadius(ACTUAL_PROGRESS_OUTER_RADIUS)
+          .innerRadius(ACTUAL_PROGRESS_INNER_RADIUS)
           .startAngle(0)
           .endAngle(1 * Math.PI);
 
+        // Render the expected progress ring
+        var expectedProgressRing;
+
+        // Render the inner circle
+
+        // Render the inner circle text
+
+        // Append the actual progress ring
         svg.append('path')
           .attr('class', 'arc')
-          .attr('d', arc);
+          .style('fill', colors.GREEN)
+          .attr('d', actualProgressRing);
 
       })();
     </script>
