@@ -31,6 +31,22 @@
       Actual: 0%, Expected: 15%<br />
       <circular-progress actual="0" expected="0.15"></circular-progress>
     </div>
+    <div>
+      Actual: -10%, Expected: 15%<br />
+      <circular-progress actual="0" expected="0.15"></circular-progress>
+    </div>
+    <div>
+      Actual: 110%, Expected: 15%<br />
+      <circular-progress actual="0" expected="0.15"></circular-progress>
+    </div>
+    <div>
+      Actual: 15%, Expected: -10%<br />
+      <circular-progress actual="0" expected="0.15"></circular-progress>
+    </div>
+    <div>
+      Actual: 15%, Expected: 110%<br />
+      <circular-progress actual="0" expected="0.15"></circular-progress>
+    </div>
   </body>
   <script>
     (function() {
@@ -44,11 +60,13 @@
           link: function(scope, elem, attr) {
             // Color constants
             var COLORS = {
-              'DARK_GREEN':  '#64BA00',
-              'LIGHT_GREEN': 'B9E17D',
-              ORANGE:        '#FFA500',
-              RED:           '#FF0000',
-              GREY:          '#F1F1F1'
+              'DARK_GREEN':    '#64BA00',
+              'LIGHT_GREEN':   'B9E17D',
+              ORANGE:          '#FFA500',
+              RED:             '#FF0000',
+              GREY:            '#F1F1F1',
+              'PROGRESS_GREY': '#A9A9A9',
+              'PCT_GREY':      '#4C4C4C'
             };
 
             // Return a float between 0 to 1.0 as a string with a percent
@@ -78,18 +96,16 @@
                 console.log('dark green');
                 return COLORS.DARK_GREEN
               }
-
-
             }
 
             // Size constants
-            var RADIUS = 100,
+            var RADIUS = 70,
                 ACTUAL_PROGRESS_THICKNESS = 5, // px
                 ACTUAL_PROGRESS_OUTER_RADIUS = RADIUS, // px
                 ACTUAL_PROGRESS_INNER_RADIUS = ACTUAL_PROGRESS_OUTER_RADIUS - ACTUAL_PROGRESS_THICKNESS, // px
                 PROGRESS_SPACING = 3, // px
                 CIRCLE_MARGIN = 5, // px
-                EXPECTED_PROGRESS_THICKNESS = 5, // px
+                EXPECTED_PROGRESS_THICKNESS = 3, // px
                 EXPECTED_PROGRESS_OUTER_RADIUS = ACTUAL_PROGRESS_INNER_RADIUS - PROGRESS_SPACING, // px
                 EXPECTED_PROGRESS_INNER_RADIUS = EXPECTED_PROGRESS_OUTER_RADIUS - EXPECTED_PROGRESS_THICKNESS, // px
                 CIRCLE_RADIUS = EXPECTED_PROGRESS_INNER_RADIUS - CIRCLE_MARGIN; // px
@@ -133,34 +149,27 @@
                 .attr('r', CIRCLE_RADIUS)
                 .style('fill', COLORS.GREY);
 
-              // Append the inner circle text
+              // Append the inner circle progress value
               var actualProgress = getPctString(attr.actual);
               svg.append('text')
                 .text(actualProgress)
-                .attr('x', '-8px')
                 .attr('font-family', 'Helvetica')
-                .attr('font-size', '42px')
-                .style('fill', '#555555')
+                .attr('font-size', '32px')
+                .style('fill', COLORS.PCT_GREY)
                 .attr('text-anchor', 'middle')
                 .attr('alignment-baseline', 'center')
-
-                // Append the percentage
-                svg.append('text')
+                  .append('tspan')
                   .text('%')
-                  .attr('x', '26px')
-                  .attr('font-family', 'Helvetica')
-                  .attr('font-size', '24px')
-                  .attr('fill', '#555555')
-                  .attr('text-anchor', 'middle')
-                  .attr('alignment-baseline', 'center')
+                  .attr('font-size', '16px')
+
 
                 // Append the progress label
                 svg.append('text')
                   .text('Progress')
                   .attr('y', '20px')
                   .attr('font-family', 'Helvetica')
-                  .attr('font-size', '16px')
-                  .attr('fill', '#555555')
+                  .attr('font-size', '14px')
+                  .attr('fill', COLORS.PROGRESS_GREY)
                   .attr('text-anchor', 'middle')
                   .attr('alignment-baseline', 'center')
 
