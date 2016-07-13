@@ -1,132 +1,141 @@
-<html>
+<!doctype html>
+<html ng-app="demoApp">
   <head>
-    <title>BetterWorks Coding Challenge</title>
+    <title>Angular Circular Progress Demo</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
   </head>
   <body>
-    <script src="https://d3js.org/d3.v4.min.js"></script>
-    <script>
-      (function() {
-        var RADIUS = 100;
-
-        // Actual progress ring sizes
-        var ACTUAL_PROGRESS_THICKNESS = 5; // px
-        var ACTUAL_PROGRESS_OUTER_RADIUS = RADIUS; // px
-        var ACTUAL_PROGRESS_INNER_RADIUS = ACTUAL_PROGRESS_OUTER_RADIUS - ACTUAL_PROGRESS_THICKNESS; // px
-
-        // Spacing between progress rings
-        var PROGRESS_SPACING = 3; // px
-
-        // Spacing between rings and circle
-        var CIRCLE_MARGIN = 5;
-
-        // Expected progress ring sizes
-        var EXPECTED_PROGRESS_THICKNESS = 3; // px
-        var EXPECTED_PROGRESS_OUTER_RADIUS = ACTUAL_PROGRESS_INNER_RADIUS - PROGRESS_SPACING; // px
-        var EXPECTED_PROGRESS_INNER_RADIUS = EXPECTED_PROGRESS_OUTER_RADIUS - EXPECTED_PROGRESS_THICKNESS; // px
-
-        // Circle radius
-        var CIRCLE_RADIUS = EXPECTED_PROGRESS_INNER_RADIUS - CIRCLE_MARGIN; // px
-
-        // Available color constants
-        var colors = {
-          GREEN: 'green',
-          ORANGE: 'orange',
-          RED: 'red',
-          GREY: '#EEEEEE'
-        }
-
-        // Render the SVG container element
-        var svg = d3.select("body")
-          .append('svg')
-          .attr('width', RADIUS * 2)
-          .attr('height', RADIUS * 2)
-          .append('g')
-          .attr('transform', 'translate(' + RADIUS + ', ' + RADIUS + ')');
-
-        // Render the actual progress arc
-        var actualProgressArc = d3.arc()
-          .outerRadius(ACTUAL_PROGRESS_OUTER_RADIUS)
-          .innerRadius(ACTUAL_PROGRESS_INNER_RADIUS)
-          .startAngle(0);
-          //.endAngle(1 * Math.PI);
-
-        // Render the expected progress arc
-        var expectedProgressArc = d3.arc()
-          .outerRadius(EXPECTED_PROGRESS_OUTER_RADIUS)
-          .innerRadius(EXPECTED_PROGRESS_INNER_RADIUS)
-          .startAngle(0)
-          .endAngle(1 * Math.PI);
-
-        // Append the actual progress ring
-        var actualProgressRing = svg.append('path')
-          .datum({endAngle: 0 * Math.PI})
-          .attr('class', 'arc')
-          .style('fill', colors.GREEN)
-          .attr('d', actualProgressArc);
-
-        // Append the expected progress ring
-        var expectedProgressRing = svg.append('path')
-          .attr('class', 'arc')
-          .style('fill', colors.GREEN)
-          .attr('d', expectedProgressArc);
-
-        // Append the inner circle
-        svg.append('circle')
-          .attr('r', CIRCLE_RADIUS)
-          .style('fill', colors.GREY);
-
-        // Append the inner circle text
-        svg.append('text')
-          .text('78')
-          .attr('x', '-8px')
-          .attr('font-family', 'Helvetica')
-          .attr('font-size', '42px')
-          .style('fill', '#555555')
-          .attr('text-anchor', 'middle')
-          .attr('alignment-baseline', 'center')
-
-          // Append the percentage
-          svg.append('text')
-            .text('%')
-            .attr('x', '26px')
-            .attr('font-family', 'Helvetica')
-            .attr('font-size', '24px')
-            .attr('fill', '#555555')
-            .attr('text-anchor', 'middle')
-            .attr('alignment-baseline', 'center')
-
-          // Append the progress label
-          svg.append('text')
-            .text('Progress')
-            .attr('y', '20px')
-            .attr('font-family', 'Helvetica')
-            .attr('font-size', '16px')
-            .attr('fill', '#555555')
-            .attr('text-anchor', 'middle')
-            .attr('alignment-baseline', 'center')
-
-        actualProgressRing.transition()
-          .attr('fill', 'red');
-
-        // Transition the arc
-        // https://bl.ocks.org/mbostock/5100636
-        setTimeout(function() {
-          actualProgressRing.transition()
-            .duration(1000)
-            .style('fill', 'red')
-            .call(arcTween, 2 * Math.PI);
-        }, 200);
-
-        function arcTween(transition, newAngle) {
-          transition.attrTween('d', function(d) {
-            var interpolate = d3.interpolate(d.endAngle, newAngle);
-            return function(t) {
-              d.endAngle = interpolate(t);
-              return actualProgressArc(d)
-            }
-          });
-        }
-      })();
-    </script>
+    <circular-progress actual="0.45" expected="0.15"></circular-progress>
   </body>
+  <script>
+    (function() {
+      var demoApp = angular.module('demoApp', []);
+
+      // TODO: Use a templateUrl
+      demoApp.directive('circularProgress', function() {
+        return {
+          restrict: 'E',
+          template: '<div class="circular-progress"></div>',
+          link: function(scope, elem, attr) {
+            // Size constants
+            var RADIUS = 100,
+                ACTUAL_PROGRESS_THICKNESS = 5, // px
+                ACTUAL_PROGRESS_OUTER_RADIUS = RADIUS, // px
+                ACTUAL_PROGRESS_INNER_RADIUS = ACTUAL_PROGRESS_OUTER_RADIUS - ACTUAL_PROGRESS_THICKNESS, // px
+                PROGRESS_SPACING = 3, // px
+                CIRCLE_MARGIN = 5, // px
+                EXPECTED_PROGRESS_THICKNESS = 5, // px
+                EXPECTED_PROGRESS_OUTER_RADIUS = ACTUAL_PROGRESS_INNER_RADIUS - PROGRESS_SPACING, // px
+                EXPECTED_PROGRESS_INNER_RADIUS = EXPECTED_PROGRESS_OUTER_RADIUS - EXPECTED_PROGRESS_THICKNESS, // px
+                CIRCLE_RADIUS = EXPECTED_PROGRESS_INNER_RADIUS - CIRCLE_MARGIN; // px
+
+            // Color constants
+            var COLORS = {
+              GREEN: 'green',
+              ORANGE: 'orange',
+              RED: 'red',
+              GREY: '#EEEEEE'
+            };
+
+            // Class constant
+            var PROGRESS_CLASS = '.circular-progress';
+
+            // Render the SVG container element
+            var svg = d3.select(PROGRESS_CLASS)
+              .append('svg')
+              .attr('width', RADIUS * 2)
+              .attr('height', RADIUS * 2)
+              .append('g')
+              .attr('transform', 'translate(' + RADIUS + ', ' + RADIUS + ')');
+
+              // Render the actual progress arc
+              var actualProgressArc = d3.arc()
+                .outerRadius(ACTUAL_PROGRESS_OUTER_RADIUS)
+                .innerRadius(ACTUAL_PROGRESS_INNER_RADIUS)
+                .startAngle(0);
+                //.endAngle(1 * Math.PI);
+
+              // Render the expected progress arc
+              var expectedProgressArc = d3.arc()
+                .outerRadius(EXPECTED_PROGRESS_OUTER_RADIUS)
+                .innerRadius(EXPECTED_PROGRESS_INNER_RADIUS)
+                .startAngle(0)
+                .endAngle(1 * Math.PI);
+
+              // Append the actual progress ring
+              var actualProgressRing = svg.append('path')
+                .datum({endAngle: 0 * Math.PI})
+                .attr('class', 'arc')
+                .style('fill', COLORS.GREEN)
+                .attr('d', actualProgressArc);
+
+              // Append the expected progress ring
+              var expectedProgressRing = svg.append('path')
+                .attr('class', 'arc')
+                .style('fill', COLORS.GREEN)
+                .attr('d', expectedProgressArc);
+
+              // Append the inner circle
+              svg.append('circle')
+                .attr('r', CIRCLE_RADIUS)
+                .style('fill', COLORS.GREY);
+
+              // Append the inner circle text
+              svg.append('text')
+                .text('78')
+                .attr('x', '-8px')
+                .attr('font-family', 'Helvetica')
+                .attr('font-size', '42px')
+                .style('fill', '#555555')
+                .attr('text-anchor', 'middle')
+                .attr('alignment-baseline', 'center')
+
+                // Append the percentage
+                svg.append('text')
+                  .text('%')
+                  .attr('x', '26px')
+                  .attr('font-family', 'Helvetica')
+                  .attr('font-size', '24px')
+                  .attr('fill', '#555555')
+                  .attr('text-anchor', 'middle')
+                  .attr('alignment-baseline', 'center')
+
+                // Append the progress label
+                svg.append('text')
+                  .text('Progress')
+                  .attr('y', '20px')
+                  .attr('font-family', 'Helvetica')
+                  .attr('font-size', '16px')
+                  .attr('fill', '#555555')
+                  .attr('text-anchor', 'middle')
+                  .attr('alignment-baseline', 'center')
+
+              actualProgressRing.transition()
+                .attr('fill', 'red');
+
+              // Transition the arc
+              // https://bl.ocks.org/mbostock/5100636
+              setTimeout(function() {
+                actualProgressRing.transition()
+                  .duration(1000)
+                  .style('fill', 'red')
+                  .call(arcTween, 2 * Math.PI);
+              }, 200);
+
+              function arcTween(transition, newAngle) {
+                transition.attrTween('d', function(d) {
+                  var interpolate = d3.interpolate(d.endAngle, newAngle);
+                  return function(t) {
+                    d.endAngle = interpolate(t);
+                    return actualProgressArc(d)
+                  }
+                });
+              }
+
+          }
+        }
+      });
+    })()
+  </script>
 </html>
