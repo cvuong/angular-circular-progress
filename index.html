@@ -4,9 +4,33 @@
     <title>Angular Circular Progress Demo</title>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js"></script>
     <script src="https://d3js.org/d3.v4.min.js"></script>
+    <style>
+      .circular-progress {
+        margin: 10px;
+      }
+    </style>
   </head>
   <body>
-    <circular-progress actual="0.45" expected="0.15"></circular-progress>
+    <div>
+      Actual: 45%, Expected: 15%<br />
+      <circular-progress actual="0.45" expected="0.15"></circular-progress>
+    </div>
+    <div>
+      Actual: 14%, Expected: 40%<br />
+      <circular-progress actual="0.14" expected="0.40"></circular-progress>
+    </div>
+    <div>
+      Actual: 15%, Expected: 75%<br />
+      <circular-progress actual="0.15" expected="0.75"></circular-progress>
+    </div>
+    <div>
+      Actual: 100%, Expected: 10%<br />
+      <circular-progress actual="1" expected="0.10"></circular-progress>
+    </div>
+    <div>
+      Actual: 0%, Expected: 15%<br />
+      <circular-progress actual="0" expected="0.15"></circular-progress>
+    </div>
   </body>
   <script>
     (function() {
@@ -20,16 +44,17 @@
           link: function(scope, elem, attr) {
             // Color constants
             var COLORS = {
-              GREEN: 'green',
-              ORANGE: 'orange',
-              RED: 'red',
-              GREY: '#EEEEEE'
+              'DARK_GREEN':  '#64BA00',
+              'LIGHT_GREEN': 'B9E17D',
+              ORANGE:        '#FFA500',
+              RED:           '#FF0000',
+              GREY:          '#F1F1F1'
             };
 
             // Return a float between 0 to 1.0 as a string with a percent
             // (i.e., 0.4567 -> "45%"), we always truncate to two digits.
             function getPctString(num) {
-              return (num * 100)
+              return (num * 100).toFixed(0)
             }
 
             // Converts a float between 0 to 1.0 into a radians value between
@@ -39,15 +64,18 @@
             }
 
             // Returns the color value of the actual progress arc when passed
-            // in an actual progress angle and an expected progress angle.
-            function getActualProgressEndColor(actualAngle, expectedAngle) {
-              var diffAngle = actualProgressAngle - expectedProgressAngle;
-
-              if ((diffAngle < -25) && (diffAngle >= -50)) {
+            // in an actual progress pct string and an expected progress pct string.
+            function getActualProgressEndColor(actualProgress, expectedProgress) {
+              var diff = actualProgress - expectedProgress;
+              console.log('diff', diff)
+              if ((diff < -25) && (diff >= -50)) {
+                console.log('orange');
                 return COLORS.ORANGE
-              } else if (diffAngle < -50) {
+              } else if (diff < -50) {
+                console.log('red');
                 return COLORS.RED
               } else {
+                console.log('dark green');
                 return COLORS.DARK_GREEN
               }
 
@@ -66,11 +94,8 @@
                 EXPECTED_PROGRESS_INNER_RADIUS = EXPECTED_PROGRESS_OUTER_RADIUS - EXPECTED_PROGRESS_THICKNESS, // px
                 CIRCLE_RADIUS = EXPECTED_PROGRESS_INNER_RADIUS - CIRCLE_MARGIN; // px
 
-            // Class constant
-            var PROGRESS_CLASS = '.circular-progress';
-
             // Render the SVG container element
-            var svg = d3.select(PROGRESS_CLASS)
+            var svg = d3.select(elem.children()[0])
               .append('svg')
               .attr('width', RADIUS * 2)
               .attr('height', RADIUS * 2)
@@ -93,14 +118,14 @@
               var actualProgressRing = svg.append('path')
                 .datum({endAngle: 0})
                 .attr('class', 'arc')
-                .style('fill', COLORS.GREEN)
+                .style('fill', COLORS.DARK_GREEN)
                 .attr('d', actualProgressArc);
 
               // Append the expected progress ring
               var expectedProgressRing = svg.append('path')
                 .datum({endAngle: 0})
                 .attr('class', 'arc')
-                .style('fill', COLORS.GREEN)
+                .style('fill', COLORS.LIGHT_GREEN)
                 .attr('d', expectedProgressArc);
 
               // Append the inner circle
@@ -147,13 +172,14 @@
               setTimeout(function() {
                 var actualProgressAngle = convertPctToRadians(attr.actual);
                 var expectedProgressAngle = convertPctToRadians(attr.expected);
-                var diffAngle = actualProgressAngle - expectedProgressAngle;
 
-                var actualProgressEndColor;
+                var actualProgress = getPctString(attr.actual);
+                var expectedProgress = getPctString(attr.expected);
+                var actualProgressEndColor = getActualProgressEndColor(actualProgress, expectedProgress);
 
                 actualProgressRing.transition()
                   .duration(1000)
-                  .style('fill', 'red')
+                  .style('fill', actualProgressEndColor)
                   .call(arcTweenActual, actualProgressAngle);
                 expectedProgressRing.transition()
                   .duration(1000)
