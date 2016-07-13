@@ -18,6 +18,42 @@
           restrict: 'E',
           template: '<div class="circular-progress"></div>',
           link: function(scope, elem, attr) {
+            // Color constants
+            var COLORS = {
+              GREEN: 'green',
+              ORANGE: 'orange',
+              RED: 'red',
+              GREY: '#EEEEEE'
+            };
+
+            // Return a float between 0 to 1.0 as a string with a percent
+            // (i.e., 0.4567 -> "45%"), we always truncate to two digits.
+            function getPctString(num) {
+              return (num * 100)
+            }
+
+            // Converts a float between 0 to 1.0 into a radians value between
+            // 0 to 2PI.
+            function convertPctToRadians(num) {
+              return num * (2 * Math.PI)
+            }
+
+            // Returns the color value of the actual progress arc when passed
+            // in an actual progress angle and an expected progress angle.
+            function getActualProgressEndColor(actualAngle, expectedAngle) {
+              var diffAngle = actualProgressAngle - expectedProgressAngle;
+
+              if ((diffAngle < -25) && (diffAngle >= -50)) {
+                return COLORS.ORANGE
+              } else if (diffAngle < -50) {
+                return COLORS.RED
+              } else {
+                return COLORS.DARK_GREEN
+              }
+
+
+            }
+
             // Size constants
             var RADIUS = 100,
                 ACTUAL_PROGRESS_THICKNESS = 5, // px
@@ -29,14 +65,6 @@
                 EXPECTED_PROGRESS_OUTER_RADIUS = ACTUAL_PROGRESS_INNER_RADIUS - PROGRESS_SPACING, // px
                 EXPECTED_PROGRESS_INNER_RADIUS = EXPECTED_PROGRESS_OUTER_RADIUS - EXPECTED_PROGRESS_THICKNESS, // px
                 CIRCLE_RADIUS = EXPECTED_PROGRESS_INNER_RADIUS - CIRCLE_MARGIN; // px
-
-            // Color constants
-            var COLORS = {
-              GREEN: 'green',
-              ORANGE: 'orange',
-              RED: 'red',
-              GREY: '#EEEEEE'
-            };
 
             // Class constant
             var PROGRESS_CLASS = '.circular-progress';
@@ -54,24 +82,23 @@
                 .outerRadius(ACTUAL_PROGRESS_OUTER_RADIUS)
                 .innerRadius(ACTUAL_PROGRESS_INNER_RADIUS)
                 .startAngle(0);
-                //.endAngle(1 * Math.PI);
 
               // Render the expected progress arc
               var expectedProgressArc = d3.arc()
                 .outerRadius(EXPECTED_PROGRESS_OUTER_RADIUS)
                 .innerRadius(EXPECTED_PROGRESS_INNER_RADIUS)
                 .startAngle(0)
-                .endAngle(1 * Math.PI);
 
               // Append the actual progress ring
               var actualProgressRing = svg.append('path')
-                .datum({endAngle: 0 * Math.PI})
+                .datum({endAngle: 0})
                 .attr('class', 'arc')
                 .style('fill', COLORS.GREEN)
                 .attr('d', actualProgressArc);
 
               // Append the expected progress ring
               var expectedProgressRing = svg.append('path')
+                .datum({endAngle: 0})
                 .attr('class', 'arc')
                 .style('fill', COLORS.GREEN)
                 .attr('d', expectedProgressArc);
@@ -82,8 +109,9 @@
                 .style('fill', COLORS.GREY);
 
               // Append the inner circle text
+              var actualProgress = getPctString(attr.actual);
               svg.append('text')
-                .text('78')
+                .text(actualProgress)
                 .attr('x', '-8px')
                 .attr('font-family', 'Helvetica')
                 .attr('font-size', '42px')
@@ -117,18 +145,37 @@
               // Transition the arc
               // https://bl.ocks.org/mbostock/5100636
               setTimeout(function() {
+                var actualProgressAngle = convertPctToRadians(attr.actual);
+                var expectedProgressAngle = convertPctToRadians(attr.expected);
+                var diffAngle = actualProgressAngle - expectedProgressAngle;
+
+                var actualProgressEndColor;
+
                 actualProgressRing.transition()
                   .duration(1000)
                   .style('fill', 'red')
-                  .call(arcTween, 2 * Math.PI);
-              }, 200);
+                  .call(arcTweenActual, actualProgressAngle);
+                expectedProgressRing.transition()
+                  .duration(1000)
+                  .call(arcTweenExpected, expectedProgressAngle);
+              }, 100);
 
-              function arcTween(transition, newAngle) {
+              function arcTweenActual(transition, newAngle) {
                 transition.attrTween('d', function(d) {
                   var interpolate = d3.interpolate(d.endAngle, newAngle);
                   return function(t) {
                     d.endAngle = interpolate(t);
                     return actualProgressArc(d)
+                  }
+                });
+              }
+
+              function arcTweenExpected(transition, newAngle) {
+                transition.attrTween('d', function(d) {
+                  var interpolate = d3.interpolate(d.endAngle, newAngle);
+                  return function(t) {
+                    d.endAngle = interpolate(t);
+                    return expectedProgressArc(d)
                   }
                 });
               }
