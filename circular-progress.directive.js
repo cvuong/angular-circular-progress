@@ -3,18 +3,26 @@ app.directive('circularProgress', function() {
     restrict: 'E',
     template: '<div class="circular-progress"></div>',
     link: function(scope, elem, attr) {
-      // Default the value of float to 0
-      function formatInput(float) {
+      scope.formatInput = function(float) {
         if (!float || isNaN(float)) {
           float = 0;
         }
         float = Math.min(float, 1.0);
         float = Math.max(float, 0);
         return float
+      };
+
+      // Return a float between 0 to 1.0 as a string with a percent
+      // (i.e., 0.4567 -> "45%"), we always truncate to two digits.
+      scope.getPctString = function(num) {
+        return (num * 100).toFixed(0)
       }
 
-      attr.actual = formatInput(attr.actual);
-      attr.expected = formatInput(attr.expected);
+      // Converts a float between 0 to 1.0 into a radians value between
+      // 0 to 2PI.
+      scope.convertPctToRadians = function(num) {
+        return num * (2 * Math.PI)
+      }
 
       // Color constants
       var COLORS = {
@@ -27,34 +35,21 @@ app.directive('circularProgress', function() {
         'PCT_GREY':      '#4C4C4C'
       };
 
-      // Return a float between 0 to 1.0 as a string with a percent
-      // (i.e., 0.4567 -> "45%"), we always truncate to two digits.
-      function getPctString(num) {
-        return (num * 100).toFixed(0)
-      }
-
-      // Converts a float between 0 to 1.0 into a radians value between
-      // 0 to 2PI.
-      function convertPctToRadians(num) {
-        return num * (2 * Math.PI)
-      }
-
       // Returns the color value of the actual progress arc when passed
       // in an actual progress pct string and an expected progress pct string.
-      function getActualProgressEndColor(actualProgress, expectedProgress) {
+      scope.getActualProgressEndColor = function(actualProgress, expectedProgress) {
         var diff = actualProgress - expectedProgress;
-        //console.log('diff', diff)
         if ((diff < -25) && (diff >= -50)) {
-          //console.log('orange');
           return COLORS.ORANGE
         } else if (diff < -50) {
-          //console.log('red');
           return COLORS.RED
         } else {
-          //console.log('dark green');
           return COLORS.DARK_GREEN
         }
       }
+
+      attr.actual = scope.formatInput(attr.actual);
+      attr.expected = scope.formatInput(attr.expected);
 
       // Size constants
       var RADIUS = 70,
@@ -108,7 +103,7 @@ app.directive('circularProgress', function() {
           .style('fill', COLORS.GREY);
 
         // Append the inner circle progress value
-        var actualProgress = getPctString(attr.actual);
+        var actualProgress = scope.getPctString(attr.actual);
         svg.append('text')
           .text(actualProgress)
           .attr('font-family', 'Helvetica')
@@ -137,12 +132,12 @@ app.directive('circularProgress', function() {
         // Transition the arc
         // https://bl.ocks.org/mbostock/5100636
         setTimeout(function() {
-          var actualProgressAngle = convertPctToRadians(attr.actual);
-          var expectedProgressAngle = convertPctToRadians(attr.expected);
+          var actualProgressAngle = scope.convertPctToRadians(attr.actual);
+          var expectedProgressAngle = scope.convertPctToRadians(attr.expected);
 
-          var actualProgress = getPctString(attr.actual);
-          var expectedProgress = getPctString(attr.expected);
-          var actualProgressEndColor = getActualProgressEndColor(actualProgress, expectedProgress);
+          var actualProgress = scope.getPctString(attr.actual);
+          var expectedProgress = scope.getPctString(attr.expected);
+          var actualProgressEndColor = scope.getActualProgressEndColor(actualProgress, expectedProgress);
 
           actualProgressRing.transition()
             .duration(1000)

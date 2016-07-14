@@ -1,1 +1,1 @@
-window.app = angular.module('demoApp', []);
+window.app = angular.module('app', []);

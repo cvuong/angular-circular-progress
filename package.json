@@ -1,0 +1,25 @@
+{
+  "name": "circular-progress",
+  "version": "1.0.0",
+  "description": "An angular directive for displaying circular progress.",
+  "devDependencies": {
+    "angular": "^1.5.7",
+    "angular-mocks": "^1.5.7",
+    "d3": "^4.1.1",
+    "jasmine-core": "^2.4.1",
+    "karma": "^1.1.1",
+    "karma-chrome-launcher": "^1.0.1",
+    "karma-jasmine": "^1.0.2"
+  },
+  "scripts": {
+    "test": "karma start karma.conf.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cvuong/angular-circular-progress.git"
+  },
+  "author": "Charlie Vuong",
+  "bugs": {
+    "url": "https://github.com/cvuong/angular-circular-progress/issues"
+  }
+}
