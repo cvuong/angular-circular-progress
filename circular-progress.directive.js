@@ -3,6 +3,10 @@ app.directive('circularProgress', function() {
     restrict: 'E',
     template: '<div class="circular-progress"></div>',
     link: function(scope, elem, attr) {
+      // Format input floats such that:
+      // - They are non-null (or else, they default to 0)
+      // - They are numbers (or else, they default to 0)
+      // - The bounds get capped between 0 and 1.0
       scope.formatInput = function(float) {
         if (!float || isNaN(float)) {
           float = 0;
@@ -13,7 +17,7 @@ app.directive('circularProgress', function() {
       };
 
       // Return a float between 0 to 1.0 as a string with a percent
-      // (i.e., 0.4567 -> "45%"), we always truncate to two digits.
+      // (i.e., 0.4567 -> "45"), we always truncate to two digits.
       scope.getPctString = function(num) {
         return (num * 100).toFixed(0)
       }
@@ -35,33 +39,43 @@ app.directive('circularProgress', function() {
         'PCT_GREY':      '#4C4C4C'
       };
 
-      // Returns the color value of the actual progress arc when passed
+      // Color threshold percentages
+      var ORANGE_THRESHOLD = -25;
+      var RED_THRESHOLD    = -50;
+
+      // Returns the hex color value for the actual progress arc when passed
       // in an actual progress pct string and an expected progress pct string.
       scope.getActualProgressEndColor = function(actualProgress, expectedProgress) {
         var diff = actualProgress - expectedProgress;
-        if ((diff < -25) && (diff >= -50)) {
+        if ((diff < ORANGE_THRESHOLD) && (diff >= RED_THRESHOLD)) {
           return COLORS.ORANGE
-        } else if (diff < -50) {
+        } else if (diff < RED_THRESHOLD) {
           return COLORS.RED
         } else {
           return COLORS.DARK_GREEN
         }
       }
 
+      // Format the "actual" and "expected" float values
+      // (just in case they are invalid)
       attr.actual = scope.formatInput(attr.actual);
       attr.expected = scope.formatInput(attr.expected);
 
-      // Size constants
-      var RADIUS = 70,
-          ACTUAL_PROGRESS_THICKNESS = 5, // px
-          ACTUAL_PROGRESS_OUTER_RADIUS = RADIUS, // px
-          ACTUAL_PROGRESS_INNER_RADIUS = ACTUAL_PROGRESS_OUTER_RADIUS - ACTUAL_PROGRESS_THICKNESS, // px
-          PROGRESS_SPACING = 3, // px
-          CIRCLE_MARGIN = 5, // px
-          EXPECTED_PROGRESS_THICKNESS = 3, // px
-          EXPECTED_PROGRESS_OUTER_RADIUS = ACTUAL_PROGRESS_INNER_RADIUS - PROGRESS_SPACING, // px
-          EXPECTED_PROGRESS_INNER_RADIUS = EXPECTED_PROGRESS_OUTER_RADIUS - EXPECTED_PROGRESS_THICKNESS, // px
-          CIRCLE_RADIUS = EXPECTED_PROGRESS_INNER_RADIUS - CIRCLE_MARGIN; // px
+      // Time constants (units: ms)
+      var TRANSITION_DELAY = 200,
+          TRANSITION_TIME  = 1000;
+
+      // Size constants (units: px)
+      var RADIUS                         = 70,
+          ACTUAL_PROGRESS_THICKNESS      = 5,
+          ACTUAL_PROGRESS_OUTER_RADIUS   = RADIUS,
+          ACTUAL_PROGRESS_INNER_RADIUS   = ACTUAL_PROGRESS_OUTER_RADIUS - ACTUAL_PROGRESS_THICKNESS,
+          PROGRESS_SPACING               = 3,
+          CIRCLE_MARGIN                  = 5,
+          EXPECTED_PROGRESS_THICKNESS    = 3,
+          EXPECTED_PROGRESS_OUTER_RADIUS = ACTUAL_PROGRESS_INNER_RADIUS - PROGRESS_SPACING,
+          EXPECTED_PROGRESS_INNER_RADIUS = EXPECTED_PROGRESS_OUTER_RADIUS - EXPECTED_PROGRESS_THICKNESS,
+          CIRCLE_RADIUS                  = EXPECTED_PROGRESS_INNER_RADIUS - CIRCLE_MARGIN;
 
       // Render the SVG container element
       var svg = d3.select(elem.children()[0])
@@ -115,7 +129,6 @@ app.directive('circularProgress', function() {
             .text('%')
             .attr('font-size', '16px')
 
-
           // Append the progress label
           svg.append('text')
             .text('Progress')
@@ -129,45 +142,34 @@ app.directive('circularProgress', function() {
         actualProgressRing.transition()
           .attr('fill', 'red');
 
-        // Transition the arc
+        // Add transition to the progress arcs
         // https://bl.ocks.org/mbostock/5100636
         setTimeout(function() {
-          var actualProgressAngle = scope.convertPctToRadians(attr.actual);
-          var expectedProgressAngle = scope.convertPctToRadians(attr.expected);
+          var actualProgressAngle    = scope.convertPctToRadians(attr.actual);
+          var expectedProgressAngle  = scope.convertPctToRadians(attr.expected);
 
-          var actualProgress = scope.getPctString(attr.actual);
-          var expectedProgress = scope.getPctString(attr.expected);
+          var actualProgress         = scope.getPctString(attr.actual);
+          var expectedProgress       = scope.getPctString(attr.expected);
           var actualProgressEndColor = scope.getActualProgressEndColor(actualProgress, expectedProgress);
 
           actualProgressRing.transition()
-            .duration(1000)
+            .duration(TRANSITION_TIME)
             .style('fill', actualProgressEndColor)
-            .call(arcTweenActual, actualProgressAngle);
+            .call(arcTween, actualProgressAngle, actualProgressArc);
           expectedProgressRing.transition()
-            .duration(1000)
-            .call(arcTweenExpected, expectedProgressAngle);
-        }, 100);
+            .duration(TRANSITION_TIME)
+            .call(arcTween, expectedProgressAngle, expectedProgressArc);
+        }, TRANSITION_DELAY);
 
-        function arcTweenActual(transition, newAngle) {
+        function arcTween(transition, newAngle, arc) {
           transition.attrTween('d', function(d) {
             var interpolate = d3.interpolate(d.endAngle, newAngle);
             return function(t) {
               d.endAngle = interpolate(t);
-              return actualProgressArc(d)
+              return arc(d)
             }
           });
         }
-
-        function arcTweenExpected(transition, newAngle) {
-          transition.attrTween('d', function(d) {
-            var interpolate = d3.interpolate(d.endAngle, newAngle);
-            return function(t) {
-              d.endAngle = interpolate(t);
-              return expectedProgressArc(d)
-            }
-          });
-        }
-
     }
   }
 });
